@@ -365,7 +365,6 @@ class MainActivity : AppCompatActivity() {
                                     val input = ByteArrayInputStream(data)
                                     val gzip = GZIPInputStream(input)
                                     data = IOUtils.toByteArray(gzip)
-                                    filePath = filePath.replace(".tgs", ".json")
                                     input.close()
                                     gzip.close()
                                     val jsonString = String(
@@ -488,10 +487,11 @@ class MainActivity : AppCompatActivity() {
 
                             val extension = filePath.substring(filePath.lastIndexOf('.'))
                             stickerFile = File(stickerSetDirectory, fileUniqueId + extension)
-                            if (!stickerFile.exists()) {
-                                withContext(Dispatchers.IO) {
-                                    stickerFile.createNewFile()
-                                }
+                            if (stickerFile.exists()) {
+                                stickerFile.delete()
+                            }
+                            withContext(Dispatchers.IO) {
+                                stickerFile.createNewFile()
                             }
                             stickerFile.writeBytes(data)
                         }

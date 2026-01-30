@@ -22,6 +22,10 @@ class NbadalGifEncoder(dstFile: File) : GifEncoder(dstFile) {
     private var mDelay: Int = 1
 
     override fun start() {
+        if (dstFile.exists()) {
+            dstFile.delete()
+        }
+
         encoder.start(byteArrayOutputStream)
         encoder.repeat = 0
     }
@@ -55,6 +59,10 @@ class BilibiliGifEncoder(
 
     @Throws(GifEncodeException::class)
     override fun start() {
+        if (dstFile.exists()) {
+            dstFile.delete()
+        }
+
         encoder.init(
             width,
             height,
