@@ -43,6 +43,12 @@
 
     <SwitchPreferenceCompat
         app:defaultValue="true"
+        app:key="transparentize_webm"
+        app:summary="Make the black edges of webm transparent"
+        app:title="Transparentize WebM" />
+
+    <SwitchPreferenceCompat
+        app:defaultValue="true"
         app:key="gif_encoder"
         app:title="Switch GIF Encoder" />
 

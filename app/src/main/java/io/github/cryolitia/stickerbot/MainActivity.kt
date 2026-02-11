@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.TypedValue
@@ -16,7 +15,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
-import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
 import androidx.core.view.WindowCompat
 import androidx.core.widget.doAfterTextChanged
@@ -31,8 +29,6 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import com.airbnb.lottie.LottieCompositionFactory
-import com.airbnb.lottie.LottieDrawable
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -140,16 +136,16 @@ class MainActivity : AppCompatActivity() {
                             prefixText = "https://t.me/addstickers/"
                             textInputEditText = TextInputEditText(this.context).apply {
                                 doAfterTextChanged {
-                                    if (text?.contains("https://t.me/addstickers/") == true) {
+                                    if (text?.contains("https://t.me/addstickers/") == true || text?.contains("https://t.me/addemoji/") == true) {
                                         setText(
                                             text?.replace(
-                                                "https://t.me/addstickers/".toRegex(),
+                                                "https://t.me/(addstickers|addemoji)/".toRegex(),
                                                 ""
                                             )
                                         )
                                     }
                                 }
-                                if (clipText != null && clipText.contains("https://t.me/addstickers/")) {
+                                if (clipText != null && (clipText.contains("https://t.me/addstickers/") || clipText.contains("https://t.me/addemoji/") )) {
                                     setText(clipText)
                                 }
                             }
@@ -349,54 +345,55 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         lateinit var stickerFile: File
-                        if (sticker.is_video) {
-                            withContext(Dispatchers.Main) {
-                                dialogBinding.StickerImage.visibility = View.GONE
-                                dialogBinding.LottieView.visibility = View.GONE
-                            }
-                        } else if (sticker.is_animated) {
+
+                        if (sticker.is_animated || sticker.is_video) {
                             withContext(Dispatchers.Main) {
                                 dialogBinding.FrameLayout.visibility = View.VISIBLE
-                                dialogBinding.StickerImage.visibility = View.INVISIBLE
-                                dialogBinding.LottieView.visibility = View.VISIBLE
+                                if (sticker.is_video) {
+                                    dialogBinding.StickerImage.visibility = View.GONE
+                                    dialogBinding.LottieView.visibility = View.GONE
+                                } else {
+                                    dialogBinding.StickerImage.visibility = View.INVISIBLE
+                                    dialogBinding.LottieView.visibility = View.VISIBLE
+                                }
                             }
                             withContext(Dispatchers.IO) {
                                 try {
-                                    val input = ByteArrayInputStream(data)
-                                    val gzip = GZIPInputStream(input)
-                                    data = IOUtils.toByteArray(gzip)
-                                    input.close()
-                                    gzip.close()
-                                    val jsonString = String(
-                                        data,
-                                        StandardCharsets.UTF_8
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        dialogBinding.LottieView.setAnimationFromJson(
-                                            jsonString,
-                                            sticker.file_unique_id
+                                    if (sticker.is_animated) {
+                                        val input = ByteArrayInputStream(data)
+                                        val gzip = GZIPInputStream(input)
+                                        data = IOUtils.toByteArray(gzip)
+                                        input.close()
+                                        gzip.close()
+                                        val jsonString = String(
+                                            data,
+                                            StandardCharsets.UTF_8
                                         )
-                                        dialogBinding.LottieView.playAnimation()
+                                        withContext(Dispatchers.Main) {
+                                            dialogBinding.LottieView.setAnimationFromJson(
+                                                jsonString,
+                                                sticker.file_unique_id
+                                            )
+                                            dialogBinding.LottieView.playAnimation()
+                                        }
                                     }
 
-                                    val lottieComposition =
-                                        LottieCompositionFactory.fromJsonStringSync(
-                                            jsonString, sticker.file_unique_id
-                                        ).value!!
-                                    val lottieDrawable = LottieDrawable()
-                                    lottieDrawable.callback = View(context)
-                                    lottieDrawable.composition = lottieComposition
-                                    val delay = (1000.0 / lottieComposition.frameRate).toInt()
-                                    var width = lottieDrawable.intrinsicWidth
-                                    var height = lottieDrawable.intrinsicHeight
-                                    val durationInFrames: Int =
-                                        lottieDrawable.composition.durationFrames.toInt()
                                     stickerFile = File(stickerSetDirectory, "$fileUniqueId.gif")
 
                                     val maxSize = getPreference(
                                         stringPreferencesKey(LIMIT_SIZE),
                                         "512"
                                     ).toFloatOrNull() ?: 512.0F
+
+                                    var decoder = if (sticker.is_animated) LottieStickerDecoder(
+                                        data,
+                                        context,
+                                        sticker.file_unique_id
+                                    ) else WebMDecoder(data, context)
+                                    decoder.start()
+                                    val width = decoder.getWidth()
+                                    val height = decoder.getHeight()
+                                    val durationInFrames = decoder.getDuration()
                                     val scaleFactor = minOf(
                                         min(maxSize, sticker.width.toFloat()) / width,
                                         min(maxSize, sticker.height.toFloat()) / height,
@@ -419,7 +416,6 @@ class MainActivity : AppCompatActivity() {
                                         ) else NbadalGifEncoder(stickerFile)
 
                                         encoder.start()
-                                        encoder.setDelay(delay)
 
                                         withContext(Dispatchers.Main) {
                                             dialogBinding.FrameLinearProgressIndicator.max =
@@ -428,14 +424,9 @@ class MainActivity : AppCompatActivity() {
                                                 0
                                         }
 
-                                        lottieDrawable.setBounds(0, 0, width, height)
-
-                                        for (index in 0..durationInFrames) {
-                                            lottieDrawable.frame = index
-                                            val bitmap = createBitmap(width, height)
-                                            val canvas = Canvas(bitmap)
-                                            lottieDrawable.draw(canvas)
+                                        decoder.getFrames { bitmap, index, delay ->
                                             try {
+                                                encoder.setDelay(delay)
                                                 encoder.addFrame(
                                                     bitmap.scale(
                                                         (width * scaleFactor).toInt(),
@@ -463,6 +454,7 @@ class MainActivity : AppCompatActivity() {
                                             e.printStackTrace()
                                         }
                                     } finally {
+                                        decoder.end()
                                         encoder?.end()
                                     }
                                 } catch (e: Exception) {

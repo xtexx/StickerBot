@@ -70,48 +70,55 @@
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp">
 
-            <FrameLayout
-                android:id="@+id/frame"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <ImageView
-                    android:id="@+id/StickerImage"
-                    android:layout_width="128dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:contentDescription="@string/sticker_image"
-                    tools:srcCompat="@tools:sample/avatars" />
-
-                <com.airbnb.lottie.LottieAnimationView
-                    android:id="@+id/LottieView"
-                    android:layout_width="128dp"
-                    android:layout_height="128dp"
-                    android:layout_marginStart="16dp"
-                    android:visibility="gone"
-                    app:lottie_repeatCount="-1"
-                    app:lottie_repeatMode="restart" />
-            </FrameLayout>
-
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/FrameLayout"
+                android:id="@+id/preview_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:layout_constraintEnd_toEndOf="@+id/frame"
-                app:layout_constraintStart_toStartOf="@+id/frame"
-                app:layout_constraintTop_toBottomOf="@+id/frame">
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <FrameLayout
+                    android:id="@+id/frame"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:id="@+id/StickerImage"
+                        android:layout_width="128dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:contentDescription="@string/sticker_image"
+                        tools:srcCompat="@tools:sample/avatars" />
+
+                    <com.airbnb.lottie.LottieAnimationView
+                        android:id="@+id/LottieView"
+                        android:layout_width="128dp"
+                        android:layout_height="128dp"
+                        android:layout_marginStart="16dp"
+                        android:visibility="gone"
+                        app:lottie_repeatCount="-1"
+                        app:lottie_repeatMode="restart" />
+                </FrameLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/FrameLayout"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/frame" >
 
                 <ImageView
                     android:id="@+id/FrameImageView"
                     android:layout_width="128dp"
                     android:layout_height="128dp"
                     android:layout_marginStart="16dp"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="16dp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:srcCompat="@tools:sample/avatars" />
 
                 <com.google.android.material.progressindicator.LinearProgressIndicator
                     android:id="@+id/FrameLinearProgressIndicator"
@@ -134,7 +141,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/FrameLinearProgressIndicator" />
-
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <TextView
@@ -142,8 +149,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                app:layout_constraintStart_toEndOf="@+id/frame"
-                app:layout_constraintTop_toTopOf="@+id/frame" />
+                app:layout_constraintStart_toEndOf="@+id/preview_layout"
+                app:layout_constraintTop_toTopOf="@+id/preview_layout" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </HorizontalScrollView>
 

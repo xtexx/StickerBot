@@ -56,7 +56,7 @@ const val OPEN_DOCUMENT = "open_document"
 const val TEST_BOT = "test_bot"
 const val STICKER_PER_LINE = "sticker_per_line"
 const val LIMIT_SIZE = "limit_size"
-
+const val TRANSPARENTIZE_WEBM = "transparentize_webm"
 class SettingFragment : PreferenceFragmentCompat() {
 
     val getContent =
