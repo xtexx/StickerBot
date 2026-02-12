@@ -16,7 +16,6 @@ import java.io.FileNotFoundException
 
 
 lateinit var stickerRoot: File
-lateinit var cacheRoot: File
 
 val defaultRootProjection = arrayOf(
     Root.COLUMN_ROOT_ID,
@@ -35,13 +34,10 @@ val defaultDocumentProjection = arrayOf(
     Document.COLUMN_FLAGS
 )
 
-
 class StickerDocument : DocumentsProvider() {
-
     override fun onCreate(): Boolean {
         return try {
             stickerRoot = File(context!!.getExternalFilesDir(null), "Stickers")
-            cacheRoot = File(context!!.externalCacheDir, "Stickers")
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -79,7 +75,7 @@ class StickerDocument : DocumentsProvider() {
         sortOrder: String?
     ): Cursor {
         val result = MatrixCursor(projection ?: defaultDocumentProjection)
-        if (parentDocumentId == "root" || parentDocumentId == "root_dir") {
+        if (parentDocumentId == "root") {
             includeFile(result, parentDocumentId, null)
             return result
         }
@@ -106,8 +102,6 @@ class StickerDocument : DocumentsProvider() {
             } else {
                 super.getDocumentType(documentId)
             }
-        } else if (documentId == "root_dir") {
-            return Document.MIME_TYPE_DIR
         }
         val file = getFileForDocId(documentId)
         return getTypeForFile(file)
@@ -149,18 +143,17 @@ class StickerDocument : DocumentsProvider() {
      */
     private fun getDocIdForFile(file: File): String {
         var path = file.absolutePath
-        val isCache = path.contains("io.github.cryolitia.stickerbot/cache", true)
         // Start at first char of path under root
-        val rootPath: String = if (isCache) cacheRoot.absolutePath else stickerRoot.absolutePath
+        val rootPath: String = stickerRoot.absolutePath
         if (path == rootPath) {
-            return if (isCache) "cache" else "stickers"
+            return "stickers"
         }
         path = if (rootPath.endsWith("/")) {
             path.substring(rootPath.length)
         } else {
             path.substring(rootPath.length + 1)
         }
-        return (if (isCache) "cache:" else "stickers:") + path
+        return "stickers:$path"
     }
 
     /**
@@ -173,30 +166,13 @@ class StickerDocument : DocumentsProvider() {
      */
     @Throws(FileNotFoundException::class)
     private fun includeFile(result: MatrixCursor, docId: String?, file: File?) {
-
         if (docId == "root") {
-            result.newRow().apply {
-                add(Document.COLUMN_DOCUMENT_ID, "root_dir")
-                add(Document.COLUMN_DISPLAY_NAME, "Root Dir")
-                add(Document.COLUMN_MIME_TYPE, Document.MIME_TYPE_DIR)
-            }
-            return
-        }
-
-        if (docId == "root_dir") {
             result.newRow().apply {
                 add(Document.COLUMN_DOCUMENT_ID, "stickers")
                 add(Document.COLUMN_DISPLAY_NAME, "Stickers")
                 add(Document.COLUMN_MIME_TYPE, Document.MIME_TYPE_DIR)
                 add(Document.COLUMN_LAST_MODIFIED, stickerRoot.lastModified())
-                add(Document.COLUMN_FLAGS, Document.FLAG_DIR_PREFERS_GRID)
-            }
-            result.newRow().apply {
-                add(Document.COLUMN_DOCUMENT_ID, "cache")
-                add(Document.COLUMN_DISPLAY_NAME, "Cache")
-                add(Document.COLUMN_MIME_TYPE, Document.MIME_TYPE_DIR)
-                add(Document.COLUMN_LAST_MODIFIED, cacheRoot.lastModified())
-                add(Document.COLUMN_FLAGS, Document.FLAG_DIR_PREFERS_GRID)
+                add(Document.COLUMN_FLAGS, Document.FLAG_DIR_PREFERS_GRID or Document.FLAG_SUPPORTS_THUMBNAIL)
             }
             return
         }
@@ -239,9 +215,8 @@ class StickerDocument : DocumentsProvider() {
      */
     @Throws(FileNotFoundException::class)
     private fun getFileForDocId(docId: String): File {
-        val isCache = docId.startsWith("cache")
-        var target: File = if (isCache) cacheRoot else stickerRoot
-        if (docId == "cache" || docId == "stickers") {
+        var target: File = stickerRoot
+        if (docId == "stickers") {
             return target
         }
         val splitIndex = docId.indexOf(':', 1)
@@ -256,7 +231,6 @@ class StickerDocument : DocumentsProvider() {
             target
         }
     }
-
 
     /**
      * Get a file's MIME type
@@ -285,5 +259,4 @@ class StickerDocument : DocumentsProvider() {
         }
         return "application/octet-stream"
     }
-
 }
