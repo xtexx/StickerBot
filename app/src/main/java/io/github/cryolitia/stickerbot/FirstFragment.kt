@@ -100,7 +100,11 @@ class FirstFragment : PreferenceFragmentCompat() {
                                 .create()
                                 .show()
                         }
-                        .setNeutralButton("Close") { dialog, _ ->
+                        .setNeutralButton("Update") { dialog, _ ->
+                            dialog.dismiss()
+                            (activity as MainActivity).downloadStickers(requireContext(), directory.name)
+                        }
+                        .setPositiveButton("Close") { dialog, _ ->
                             dialog.dismiss()
                         }
                         .create()
