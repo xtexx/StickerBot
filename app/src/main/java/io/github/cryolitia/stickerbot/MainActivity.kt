@@ -543,6 +543,9 @@ class MainActivity : AppCompatActivity() {
                             .setMessage("Success")
                             .setPositiveButton("OK") { dialog, _ ->
                                 dialog.dismiss()
+                            }
+                            .setOnDismissListener {
+                                dialog.dismiss()
                                 recreate()
                             }
                             .create()
