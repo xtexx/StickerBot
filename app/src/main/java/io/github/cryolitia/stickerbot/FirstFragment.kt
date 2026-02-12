@@ -1,8 +1,8 @@
 package io.github.cryolitia.stickerbot
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.Menu
@@ -26,8 +26,6 @@ import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import java.io.File
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -36,114 +34,91 @@ class FirstFragment : PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceScreen = preferenceManager.createPreferenceScreen(requireContext())
-        val stickersDirectory = File(requireContext().getExternalFilesDir(null), "Stickers")
-        if (!stickersDirectory.exists()) {
-            stickersDirectory.mkdirs()
-        }
 
-        for (directory in stickersDirectory.listFiles()!!) {
-            if (directory.isDirectory) {
-                val metadataFile = File(
-                    requireContext().getExternalFilesDir(null),
-                    "Metadata/${directory.name}.json"
-                )
-                var metadata: StickerSet? = null
+        val stickerSetArray = iterateStickerSet(requireContext())
 
-                val preference = Preference(requireContext())
+        for (stickerSet in stickerSetArray) {
+            val directory = stickerSet.first.first
+            val metadataFile = stickerSet.first.second
+            val metadata = stickerSet.second
+            val image = stickerSet.third
 
-                if (metadataFile.exists()) {
-                    try {
-                        metadata = Json.decodeFromString<StickerSet>(metadataFile.readText())
-                    } catch (e: Exception) {
-                        Log.w("", e)
-                    }
-                }
-
-                if (metadata != null) {
-                    preference.title = metadata.title
-                    preference.summary = metadata.name
-                } else {
-                    preference.title = directory.name
-                }
-
-                var image: File? = null
+            var bitmap: Bitmap? = null
+            if (image != null) {
+                val stream = image.inputStream()
                 try {
-                    image = directory.listFiles { file ->
-                        file.name.contains("thumb", true)
-                    }?.get(0)
+                    bitmap = BitmapFactory.decodeStream(stream)
                 } catch (e: Exception) {
                     e.printStackTrace()
+                } finally {
+                    stream.close()
                 }
-                if (image == null) {
-                    try {
-                        image = directory.listFiles()?.get(0)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                if (image != null) {
-                    val stream = image.inputStream()
-                    try {
-                        val bitmap = BitmapFactory.decodeStream(stream)
-                        preference.icon = bitmap.toDrawable(resources)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    } finally {
-                        stream.close()
-                    }
-                }
-                preference.onPreferenceClickListener = OnPreferenceClickListener {
-                    lifecycleScope.launch {
-                        val recyclerView = RecyclerView(requireContext())
-                        val flexLayoutManager = FlexboxLayoutManager(context)
-                        flexLayoutManager.flexDirection = FlexDirection.ROW
-                        flexLayoutManager.justifyContent = JustifyContent.SPACE_AROUND
-                        recyclerView.layoutManager = flexLayoutManager
+            }
 
-                        recyclerView.adapter = GalleryAdapter(
-                            requireContext(),
-                            this@FirstFragment,
-                            directory.listFiles()!!
-                        )
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle(preference.title)
-                            .setView(recyclerView)
-                            .setNegativeButton("Delete") { _, _ ->
-                                MaterialAlertDialogBuilder(requireContext())
-                                    .setMessage("Delete?")
-                                    .setNegativeButton("Confirm") { _, _ ->
-                                        directory.deleteRecursively()
-                                        if (metadataFile.exists()) {
-                                            metadataFile.delete()
-                                        }
-                                        requireActivity().recreate()
-                                    }
-                                    .setNeutralButton("Cancel") { dialog, _ ->
-                                        dialog.dismiss()
-                                    }
-                                    .create()
-                                    .show()
-                            }
-                            .setNeutralButton("Close") { dialog, _ ->
-                                dialog.dismiss()
-                            }
-                            .create()
-                            .show()
-                        val params = recyclerView.layoutParams
-                        if (params is ViewGroup.MarginLayoutParams) {
-                            val dp = TypedValue.applyDimension(
-                                TypedValue.COMPLEX_UNIT_DIP,
-                                16F,
-                                resources.displayMetrics
-                            ).toInt()
-                            params.setMargins(dp, dp, dp, 0)
-                            recyclerView.layoutParams = params
+            val preference = Preference(requireContext())
+            if (metadata != null) {
+                preference.title = metadata.title
+                preference.summary = metadata.name
+            } else {
+                preference.title = directory.name
+            }
+            preference.icon = bitmap?.toDrawable(resources)
+            preference.onPreferenceClickListener = OnPreferenceClickListener {
+                lifecycleScope.launch {
+                    val recyclerView = RecyclerView(requireContext())
+                    val flexLayoutManager = FlexboxLayoutManager(context)
+                    flexLayoutManager.flexDirection = FlexDirection.ROW
+                    flexLayoutManager.justifyContent = JustifyContent.SPACE_AROUND
+                    recyclerView.layoutManager = flexLayoutManager
+
+                    recyclerView.adapter = GalleryAdapter(
+                        requireContext(),
+                        getPreviewScale(requireContext()),
+                        directory.listFiles()!!,
+                    ) { file ->
+                        lifecycleScope.launch {
+                            shareSticker(file, requireContext())
                         }
                     }
-                    true
+
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(preference.title)
+                        .setView(recyclerView)
+                        .setNegativeButton("Delete") { _, _ ->
+                            MaterialAlertDialogBuilder(requireContext())
+                                .setMessage("Delete?")
+                                .setNegativeButton("Confirm") { _, _ ->
+                                    directory.deleteRecursively()
+                                    if (metadataFile.exists()) {
+                                        metadataFile.delete()
+                                    }
+                                    requireActivity().recreate()
+                                }
+                                .setNeutralButton("Cancel") { dialog, _ ->
+                                    dialog.dismiss()
+                                }
+                                .create()
+                                .show()
+                        }
+                        .setNeutralButton("Close") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                        .create()
+                        .show()
+                    val params = recyclerView.layoutParams
+                    if (params is ViewGroup.MarginLayoutParams) {
+                        val dp = TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP,
+                            16F,
+                            resources.displayMetrics
+                        ).toInt()
+                        params.setMargins(dp, dp, dp, 0)
+                        recyclerView.layoutParams = params
+                    }
                 }
-                preferenceScreen.addPreference(preference)
+                true
             }
+            preferenceScreen.addPreference(preference)
         }
     }
 

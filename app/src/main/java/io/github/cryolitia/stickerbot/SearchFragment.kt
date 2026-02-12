@@ -98,9 +98,13 @@ class SearchFragment : Fragment() {
                         stickerMap[searchView.query]?.apply {
                             recyclerView.adapter = GalleryAdapter(
                                 requireContext(),
-                                this@SearchFragment,
-                                this.toTypedArray()
-                            )
+                                getPreviewScale(requireContext()),
+                                this.toTypedArray(),
+                            ) { file ->
+                                lifecycleScope.launch {
+                                    shareSticker(file, requireContext())
+                                }
+                            }
                         }
                     }
 
@@ -113,11 +117,17 @@ class SearchFragment : Fragment() {
 
                         override fun onQueryTextChange(newText: String?): Boolean {
                             stickerMap[newText]?.apply {
-                                recyclerView.adapter = GalleryAdapter(
-                                    requireContext(),
-                                    this@SearchFragment,
-                                    this.toTypedArray()
-                                )
+                                lifecycleScope.launch {
+                                    recyclerView.adapter = GalleryAdapter(
+                                        requireContext(),
+                                        getPreviewScale(requireContext()),
+                                        this@apply.toTypedArray(),
+                                    ) { file ->
+                                        lifecycleScope.launch {
+                                            shareSticker(file, requireContext())
+                                        }
+                                    }
+                                }
                             }
                             return true
                         }
