@@ -7,10 +7,12 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.PowerManager
+import android.text.method.ScrollingMovementMethod
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -241,7 +243,7 @@ class MainActivity : AppCompatActivity() {
                         return@onClickPositiveButton
                     }
                 } catch (e: Throwable) {
-                    e.toString().alert()
+                    e.alert()
                     e.printStackTrace()
                     return@onClickPositiveButton
                 } finally {
@@ -297,7 +299,7 @@ class MainActivity : AppCompatActivity() {
                                         dialogBinding.StickerSetImage.visibility = View.VISIBLE
                                     }
                                 } catch (e: Exception) {
-                                    e.toString().alert()
+                                    e.alert()
                                     e.printStackTrace()
                                 }
                             },
@@ -450,7 +452,7 @@ class MainActivity : AppCompatActivity() {
                                         }
                                     } catch (e: Exception) {
                                         with(context) {
-                                            e.toString().alert()
+                                            e.alert()
                                             e.printStackTrace()
                                         }
                                     } finally {
@@ -458,7 +460,7 @@ class MainActivity : AppCompatActivity() {
                                         encoder?.end()
                                     }
                                 } catch (e: Exception) {
-                                    e.toString().alert()
+                                    e.alert()
                                     e.printStackTrace()
                                 }
                             }
@@ -472,7 +474,7 @@ class MainActivity : AppCompatActivity() {
                                     dialogBinding.StickerImage.setImageBitmap(bitmap)
                                     dialogBinding.StickerImage.visibility = View.VISIBLE
                                 } catch (e: Exception) {
-                                    e.toString().alert()
+                                    e.alert()
                                     e.printStackTrace()
                                 }
                             }
@@ -610,6 +612,29 @@ context(context: Context) suspend fun String.alert() {
     withContext(Dispatchers.Main) {
         MaterialAlertDialogBuilder(context)
             .setMessage(this@alert)
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
+}
+
+context(context: Context) suspend fun Throwable.alert() {
+    withContext(Dispatchers.Main) {
+        val textView = TextView(context)
+        textView.text = this@alert.stackTraceToString()
+        textView.movementMethod = ScrollingMovementMethod()
+        textView.setHorizontallyScrolling(true)
+        val px = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            32F,
+            context.resources.displayMetrics
+        ).toInt()
+        textView.setPadding(px,px,px,0)
+        MaterialAlertDialogBuilder(context)
+            .setTitle(this@alert.toString())
+            .setView(textView)
             .setPositiveButton("OK") { dialog, _ ->
                 dialog.dismiss()
             }

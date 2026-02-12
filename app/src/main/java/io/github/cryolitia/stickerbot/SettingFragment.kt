@@ -138,7 +138,7 @@ class SettingFragment : PreferenceFragmentCompat() {
                         }
                         response.body<String>().alert()
                     } catch (e: Throwable) {
-                        e.toString().alert()
+                        e.alert()
                         e.printStackTrace()
                     } finally {
                         prepareDialog.dismiss()

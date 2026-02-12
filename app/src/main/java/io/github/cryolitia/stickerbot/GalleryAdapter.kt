@@ -165,7 +165,7 @@ suspend fun shareSticker(file: File, context: Context) {
                         webpFile = replaceCache
                     } catch (e: Exception) {
                         with(context) {
-                            e.toString().alert()
+                            e.alert()
                             e.printStackTrace()
                         }
                     }
@@ -199,7 +199,7 @@ suspend fun shareSticker(file: File, context: Context) {
                         encoder.addFrame(bitmap)
                     } catch (e: Exception) {
                         with(context) {
-                            e.toString().alert()
+                            e.alert()
                             e.printStackTrace()
                         }
                     } finally {
@@ -227,7 +227,7 @@ suspend fun shareSticker(file: File, context: Context) {
         context.startActivity(Intent.createChooser(intent, ""))
     } catch (e: Exception) {
         with(context) {
-            e.toString().alert()
+            e.alert()
             e.printStackTrace()
         }
     }
