@@ -80,7 +80,7 @@ class StickerDocument : DocumentsProvider() {
             return result
         }
         val parent = getFileForDocId(parentDocumentId)
-        for (file in parent.listFiles()!!) {
+        for (file in parent.safetyListFiles()) {
             includeFile(result, null, file)
         }
         return result

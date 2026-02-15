@@ -12,9 +12,9 @@ fun iterateStickerSet(context: Context): ArrayList<Triple<Pair<File, File>, Stic
     }
 
     val arrayList =
-        ArrayList<Triple<Pair<File, File>, StickerSet?, File?>>(stickersDirectory.listFiles()!!.size)
+        ArrayList<Triple<Pair<File, File>, StickerSet?, File?>>(stickersDirectory.safetyListFiles().size)
 
-    for (directory in stickersDirectory.listFiles()!!) {
+    for (directory in stickersDirectory.safetyListFiles()) {
         if (directory.isDirectory) {
             val metadataFile = File(
                 context.getExternalFilesDir(null),

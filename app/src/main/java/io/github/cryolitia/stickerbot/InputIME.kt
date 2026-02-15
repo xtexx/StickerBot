@@ -78,7 +78,7 @@ class InputIME : InputMethodService() {
                         binding.stickersGallery.adapter = GalleryAdapter(
                             this@InputIME,
                             getPreviewScale(this@InputIME),
-                            directory.listFiles()!!,
+                            directory.safetyListFiles(),
                         ) { file ->
                             val contentUri = FileProvider.getUriForFile(
                                 this@InputIME,

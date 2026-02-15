@@ -70,7 +70,7 @@ class SearchFragment : Fragment() {
                             val metadataDirectory =
                                 File(context!!.getExternalFilesDir(null), "Metadata")
                             if (metadataDirectory.exists()) {
-                                for (file in metadataDirectory.listFiles()!!) {
+                                for (file in metadataDirectory.safetyListFiles()) {
                                     val stickerSet =
                                         Json.decodeFromString<StickerSet>(file.readText())
                                     val stickerSetDirectory = File(
@@ -79,7 +79,7 @@ class SearchFragment : Fragment() {
                                     )
                                     if (stickerSetDirectory.exists()) {
                                         val stickerFileMap: HashMap<String, File> = HashMap()
-                                        for (file in stickerSetDirectory.listFiles()!!) {
+                                        for (file in stickerSetDirectory.safetyListFiles()) {
                                             stickerFileMap[file.nameWithoutExtension] = file
                                         }
                                         for (sticker in stickerSet.stickers) {

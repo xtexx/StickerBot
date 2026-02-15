@@ -681,3 +681,5 @@ context(context: Context) suspend fun loadingDialog(): AlertDialog {
         return@withContext prepareDialog
     }
 }
+
+fun File.safetyListFiles(): Array<File> = listFiles()?:arrayOf()

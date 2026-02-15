@@ -74,7 +74,7 @@ class FirstFragment : PreferenceFragmentCompat() {
                     recyclerView.adapter = GalleryAdapter(
                         requireContext(),
                         getPreviewScale(requireContext()),
-                        directory.listFiles()!!,
+                        directory.safetyListFiles(),
                     ) { file ->
                         lifecycleScope.launch {
                             shareSticker(file, requireContext())
