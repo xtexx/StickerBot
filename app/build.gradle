@@ -25,21 +25,33 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
 
         coreLibraryDesugaringEnabled true
     }
+
     kotlin {
         jvmToolchain(17)
         compilerOptions {
             freeCompilerArgs.add("-Xcontext-parameters")
         }
     }
+
     buildFeatures {
         viewBinding true
         buildConfig true
+    }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include "arm64-v8a", "armeabi-v7a", "x86", "x86_64"
+            universalApk true
+        }
     }
 }
 
