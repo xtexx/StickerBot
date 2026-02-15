@@ -1,3 +1,5 @@
+import java.time.temporal.ChronoUnit
+
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.plugin.serialization' version '2.3.10'
@@ -9,10 +11,11 @@ android {
 
     defaultConfig {
         applicationId "io.github.cryolitia.stickerbot"
-        minSdk 23
+        minSdk 26
         targetSdk 36
         versionCode 110
         versionName "1.1.0"
+        buildConfigField "String", "BUILD_TIME", "\"${Instant.now().truncatedTo(ChronoUnit.SECONDS).toString()}\""
     }
 
     buildTypes {
@@ -36,6 +39,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
@@ -62,9 +66,9 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 
-    implementation("com.bilibili:burstlinker:0.0.16")
+    implementation("com.arthenica:ffmpeg-kit:6.0")
     implementation("com.airbnb.android:lottie:6.7.1")
     implementation('pl.droidsonroids.gif:android-gif-drawable:1.2.30')
-
+    implementation 'de.psdev.licensesdialog:licensesdialog:2.2.0'
     implementation "commons-io:commons-io:2.21.0"
 }

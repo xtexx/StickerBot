@@ -19,6 +19,13 @@ dependencyResolutionManagement {
                 password = "9sb2n1ZvKGNMSzXqd0vIxX4nJJuRQHMOc3pf_phg".reverse()
             }
         }
+        maven {
+            url = uri("https://maven.pkg.github.com/Cryolitia/ffmpeg-kit-16KB")
+            credentials {
+                username = "Cryolitia"
+                password = "9sb2n1ZvKGNMSzXqd0vIxX4nJJuRQHMOc3pf_phg".reverse()
+            }
+        }
         gradlePluginPortal()
         google()
         mavenCentral()

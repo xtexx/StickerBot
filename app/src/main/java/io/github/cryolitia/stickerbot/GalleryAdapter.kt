@@ -138,13 +138,8 @@ suspend fun shareSticker(file: File, context: Context) {
 
                 if (replaceTransparent) {
                     try {
-                        val replaceCache = File(
-                            stickerCacheDirectory,
-                            webpFile.nameWithoutExtension + ".png"
-                        )
-                        if (!replaceCache.exists()) {
-                            replaceCache.createNewFile()
-                        }
+                        val replaceCache =
+                            File.createTempFile("replaceTransparent", ".png", stickerCacheDirectory)
 
                         val replaceBitmap = createBitmap(
                             bitmap.width,
@@ -172,40 +167,27 @@ suspend fun shareSticker(file: File, context: Context) {
                 }
 
                 if (encodeWebp) {
-                    val stickerCache = File(
-                        stickerCacheDirectory,
-                        webpFile.nameWithoutExtension + ".gif"
-                    )
-                    if (!stickerCache.exists()) {
-                        stickerCache.createNewFile()
-                    }
+                    val stickerCache =
+                        File.createTempFile("encodeWebp", ".gif", stickerCacheDirectory)
 
                     var encoder: GifEncoder? = null
                     try {
-                        encoder = if (context.getPreference(
-                                booleanPreferencesKey(
-                                    GIF_CODER
-                                ), true
-                            )
-                        ) BilibiliGifEncoder(
-                            stickerCache,
-                            context.getQuantizer(),
-                            context.getDither(),
-                            bitmap.width,
-                            bitmap.height
-                        ) else NbadalGifEncoder(stickerCache)
-
+                        encoder = FFmpegEncoder(
+                            stickerCache, this, context,
+                            { log -> log.print() },
+                            { statistics -> android.util.Log.d("ffmpeg", statistics.toString()) })
                         encoder.start()
                         encoder.addFrame(bitmap)
+                        encoder.process()
                     } catch (e: Exception) {
                         with(context) {
                             e.alert()
                             e.printStackTrace()
+                            return@withContext
                         }
                     } finally {
                         encoder?.end()
                     }
-
                     webpFile = stickerCache
                 }
 

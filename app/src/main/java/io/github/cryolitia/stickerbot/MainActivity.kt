@@ -67,6 +67,7 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.system.exitProcess
 
@@ -351,15 +352,20 @@ class MainActivity : AppCompatActivity() {
                         if (sticker.is_animated || sticker.is_video) {
                             withContext(Dispatchers.Main) {
                                 dialogBinding.FrameLayout.visibility = View.VISIBLE
+                                dialogBinding.FFmpegDetail.visibility = View.VISIBLE
+                                dialogBinding.FrameImageView.visibility = View.VISIBLE
                                 if (sticker.is_video) {
                                     dialogBinding.StickerImage.visibility = View.GONE
                                     dialogBinding.LottieView.visibility = View.GONE
+                                    dialogBinding.FrameTextView.visibility = View.GONE
                                 } else {
                                     dialogBinding.StickerImage.visibility = View.INVISIBLE
                                     dialogBinding.LottieView.visibility = View.VISIBLE
+                                    dialogBinding.FrameTextView.visibility = View.VISIBLE
                                 }
                             }
                             withContext(Dispatchers.IO) {
+                                var encoder: FFmpegEncoder? = null
                                 try {
                                     if (sticker.is_animated) {
                                         val input = ByteArrayInputStream(data)
@@ -381,87 +387,98 @@ class MainActivity : AppCompatActivity() {
                                     }
 
                                     stickerFile = File(stickerSetDirectory, "$fileUniqueId.gif")
+                                    encoder = FFmpegEncoder(
+                                        stickerFile,
+                                        this,
+                                        this@MainActivity,
+                                        { log -> log.print() },
+                                        { statistics ->
+                                            lifecycleScope.launch {
+                                                dialogBinding.FFmpegDetail.text = statistics.toFormatedString()
+                                            }
+                                        })
+                                    encoder.start()
 
                                     val maxSize = getPreference(
                                         stringPreferencesKey(LIMIT_SIZE),
                                         "512"
                                     ).toFloatOrNull() ?: 512.0F
 
-                                    var decoder = if (sticker.is_animated) LottieStickerDecoder(
-                                        data,
-                                        context,
-                                        sticker.file_unique_id
-                                    ) else WebMDecoder(data, context)
-                                    decoder.start()
-                                    val width = decoder.getWidth()
-                                    val height = decoder.getHeight()
-                                    val durationInFrames = decoder.getDuration()
-                                    val scaleFactor = minOf(
-                                        min(maxSize, sticker.width.toFloat()) / width,
-                                        min(maxSize, sticker.height.toFloat()) / height,
-                                        1.0F
-                                    )
+                                    if (sticker.is_animated) {
+                                        var decoder = LottieStickerDecoder(
+                                            data,
+                                            context,
+                                            sticker.file_unique_id
+                                        )
+                                        decoder.start()
+                                        val width = decoder.getWidth()
+                                        val height = decoder.getHeight()
+                                        val durationInFrames = decoder.getDuration()
+                                        val scaleFactor = minOf(
+                                            min(maxSize, sticker.width.toFloat()) / width,
+                                            min(maxSize, sticker.height.toFloat()) / height,
+                                            1.0F
+                                        )
 
-                                    var encoder: GifEncoder? = null
-                                    try {
-                                        encoder = if (context.getPreference(
-                                                booleanPreferencesKey(
-                                                    GIF_CODER
-                                                ), true
-                                            )
-                                        ) BilibiliGifEncoder(
-                                            stickerFile,
-                                            context.getQuantizer(),
-                                            context.getDither(),
-                                            (width * scaleFactor).toInt(),
-                                            (height * scaleFactor).toInt()
-                                        ) else NbadalGifEncoder(stickerFile)
+                                        try {
+                                            withContext(Dispatchers.Main) {
+                                                dialogBinding.FrameLinearProgressIndicator.max =
+                                                    durationInFrames
+                                                dialogBinding.FrameLinearProgressIndicator.progress =
+                                                    0
+                                            }
 
-                                        encoder.start()
-
-                                        withContext(Dispatchers.Main) {
-                                            dialogBinding.FrameLinearProgressIndicator.max =
-                                                durationInFrames
-                                            dialogBinding.FrameLinearProgressIndicator.progress =
-                                                0
-                                        }
-
-                                        decoder.getFrames { bitmap, index, delay ->
-                                            try {
-                                                encoder.setDelay(delay)
-                                                encoder.addFrame(
-                                                    bitmap.scale(
-                                                        (width * scaleFactor).toInt(),
-                                                        (height * scaleFactor).toInt()
+                                            decoder.getFrames { bitmap, index, rate ->
+                                                try {
+                                                    encoder.rate = rate
+                                                    encoder.addFrame(
+                                                        bitmap.scale(
+                                                            (width * scaleFactor).toInt(),
+                                                            (height * scaleFactor).toInt()
+                                                        )
                                                     )
-                                                )
-                                            } catch (e: Exception) {
-                                                e.toString().toast()
+                                                } catch (e: Exception) {
+                                                    e.toString().toast()
+                                                    e.printStackTrace()
+                                                }
+
+                                                withContext(Dispatchers.Main) {
+                                                    dialogBinding.FrameImageView.setImageBitmap(bitmap)
+                                                    dialogBinding.FrameTextView.text =
+                                                        "$index / $durationInFrames"
+                                                    dialogBinding.FrameLinearProgressIndicator.setProgressCompat(
+                                                        index,
+                                                        true
+                                                    )
+                                                    dialogBinding.FrameLinearProgressIndicator.isIndeterminate = false
+                                                }
+                                            }
+                                            encoder.process()
+                                        } catch (e: Exception) {
+                                            with(context) {
+                                                e.alert()
                                                 e.printStackTrace()
                                             }
-
+                                        } finally {
+                                            decoder.end()
+                                            encoder.end()
+                                        }
+                                    } else {
+                                        withContext(Dispatchers.Main) {
+                                            dialogBinding.FrameLinearProgressIndicator.isIndeterminate = true
+                                        }
+                                        encoder.process(data, maxSize.toInt()) {file ->
                                             withContext(Dispatchers.Main) {
+                                                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
                                                 dialogBinding.FrameImageView.setImageBitmap(bitmap)
-                                                dialogBinding.FrameTextView.text =
-                                                    "$index / $durationInFrames"
-                                                dialogBinding.FrameLinearProgressIndicator.setProgressCompat(
-                                                    index,
-                                                    true
-                                                )
                                             }
                                         }
-                                    } catch (e: Exception) {
-                                        with(context) {
-                                            e.alert()
-                                            e.printStackTrace()
-                                        }
-                                    } finally {
-                                        decoder.end()
-                                        encoder?.end()
                                     }
                                 } catch (e: Exception) {
                                     e.alert()
                                     e.printStackTrace()
+                                } finally {
+                                    encoder?.end()
                                 }
                             }
                         } else {
@@ -469,6 +486,8 @@ class MainActivity : AppCompatActivity() {
                                 try {
                                     dialogBinding.FrameLayout.visibility = View.GONE
                                     dialogBinding.LottieView.visibility = View.GONE
+                                    dialogBinding.FFmpegDetail.visibility = View.GONE
+                                    dialogBinding.FrameImageView.visibility = View.GONE
                                     val bitmap =
                                         BitmapFactory.decodeByteArray(data, 0, data.size)
                                     dialogBinding.StickerImage.setImageBitmap(bitmap)

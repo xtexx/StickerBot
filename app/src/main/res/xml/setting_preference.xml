@@ -41,39 +41,16 @@
         app:summary="Recode WebP to GIF when sharing in order to alleviate some software transparency issues"
         app:title="Recode WebP to GIF" />
 
-    <SwitchPreferenceCompat
-        app:defaultValue="false"
-        app:key="transparentize_webm"
-        app:summary="Make the black edges of webm transparent"
-        app:title="Transparentize WebM" />
-
-    <SwitchPreferenceCompat
-        app:defaultValue="true"
-        app:key="gif_encoder"
-        app:title="Switch GIF Encoder" />
-
-    <ListPreference
-        app:defaultValue="kmeans"
-        app:dependency="gif_encoder"
-        app:entries="@array/quantizer"
-        app:entryValues="@array/quantizer_values"
-        app:key="quantizer"
-        app:title="GIF Encoder Quantizer"
-        app:useSimpleSummaryProvider="true" />
-
-    <ListPreference
-        app:defaultValue="no"
-        app:dependency="gif_encoder"
-        app:entries="@array/dither"
-        app:entryValues="@array/dither_values"
-        app:key="dither"
-        app:title="GIF Encoder Dither"
-        app:useSimpleSummaryProvider="true" />
-
     <Preference
         app:key="open_document"
         app:summary="For Test Only"
         app:title="Open Document" />
 
+    <Preference
+        app:key="version"
+        app:title="Version" />
 
+    <Preference
+        app:key="license"
+        app:title="Open Source License" />
 </PreferenceScreen>

@@ -19,7 +19,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -48,15 +47,13 @@ const val TELEGRAM_BOT_TOKEN = "telegram_bot_token"
 const val USE_HTTP_PROXY = "use_http_proxy"
 const val HTTP_PROXY = "http_proxy"
 const val RECODE_WEBP = "recode_webp"
-const val GIF_CODER = "gif_encoder"
-const val QUANTIZER = "quantizer"
-const val DITHER = "dither"
 const val REPLACE_TRANSPARENT = "replace_transparent"
 const val OPEN_DOCUMENT = "open_document"
 const val TEST_BOT = "test_bot"
 const val STICKER_PER_LINE = "sticker_per_line"
 const val LIMIT_SIZE = "limit_size"
-const val TRANSPARENTIZE_WEBM = "transparentize_webm"
+const val VERSION = "version"
+const val LICENSE = "license"
 class SettingFragment : PreferenceFragmentCompat() {
 
     val getContent =
@@ -78,16 +75,14 @@ class SettingFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceManager.preferenceDataStore = SettingDataStore(requireContext().dataStore)
         setPreferencesFromResource(R.xml.setting_preference, rootKey)
+        findPreference<Preference>(VERSION)?.summary =
+            BuildConfig.VERSION_NAME + "+build." + BuildConfig.BUILD_TIME
         findPreference<EditTextPreference>(STICKER_PER_LINE)?.setOnBindEditTextListener { editText ->
             editText.inputType = InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
         findPreference<EditTextPreference>(LIMIT_SIZE)?.setOnBindEditTextListener { editText ->
             editText.inputType = InputType.TYPE_NUMBER_FLAG_SIGNED
         }
-        findPreference<SwitchPreferenceCompat>(GIF_CODER)?.summaryProvider =
-            Preference.SummaryProvider<SwitchPreferenceCompat> {
-                if (it.isChecked) "bilibili/BurstLinker" else "nbadal/android-gif-encoder"
-            }
         findPreference<Preference>(OPEN_DOCUMENT)?.setOnPreferenceClickListener {
             Intent(ACTION_GET_CONTENT).apply {
                 type = "*/*"

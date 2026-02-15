@@ -151,6 +151,14 @@
                 android:layout_marginStart="16dp"
                 app:layout_constraintStart_toEndOf="@+id/preview_layout"
                 app:layout_constraintTop_toTopOf="@+id/preview_layout" />
+
+            <TextView
+                android:id="@+id/FFmpegDetail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                app:layout_constraintStart_toEndOf="@+id/preview_layout"
+                app:layout_constraintTop_toBottomOf="@+id/StickerDetail" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </HorizontalScrollView>
 
