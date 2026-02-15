@@ -52,5 +52,6 @@
 
     <Preference
         app:key="license"
+        app:summary="Thanks for all the open source projects"
         app:title="Open Source License" />
 </PreferenceScreen>

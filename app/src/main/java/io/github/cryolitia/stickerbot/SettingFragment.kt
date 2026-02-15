@@ -20,6 +20,13 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import de.psdev.licensesdialog.LicensesDialog
+import de.psdev.licensesdialog.licenses.ApacheSoftwareLicense20
+import de.psdev.licensesdialog.licenses.GnuLesserGeneralPublicLicense21
+import de.psdev.licensesdialog.licenses.GnuLesserGeneralPublicLicense3
+import de.psdev.licensesdialog.licenses.MITLicense
+import de.psdev.licensesdialog.model.Notice
+import de.psdev.licensesdialog.model.Notices
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.ProxyBuilder
@@ -140,6 +147,96 @@ class SettingFragment : PreferenceFragmentCompat() {
                     }
                 }
             }
+            true
+        }
+        findPreference<Preference>(LICENSE)?.setOnPreferenceClickListener {
+            val notices = Notices()
+            notices.addNotice(
+                Notice(
+                    "Android", "https://source.android.com/", "The Android Open Source Project",
+                    ApacheSoftwareLicense20()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "FFmpeg", "https://www.ffmpeg.org/", "Fabrice Bellard",
+                    GnuLesserGeneralPublicLicense21()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "flexbox-layout", "https://github.com/google/flexbox-layout", "Google Inc.",
+                    ApacheSoftwareLicense20()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "material-components-android",
+                    "https://github.com/material-components/material-components-android",
+                    "The Android Open Source Project",
+                    ApacheSoftwareLicense20()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "ktor", "https://github.com/ktorio/ktor", "JetBrains s.r.o and contributors",
+                    ApacheSoftwareLicense20()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "kotlinx.coroutines",
+                    "https://github.com/Kotlin/kotlinx.coroutines",
+                    "JetBrains s.r.o and contributors",
+                    ApacheSoftwareLicense20()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "kotlinx.serialization",
+                    "https://github.com/Kotlin/kotlinx.serialization",
+                    "JetBrains s.r.o and respective authors and developers",
+                    ApacheSoftwareLicense20()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "ffmpeg-kit", "https://github.com/arthenica/ffmpeg-kit", "ARTHENICA LTD",
+                    GnuLesserGeneralPublicLicense3()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "lottie-android", "https://github.com/airbnb/lottie-android", "Square, Inc.",
+                    ApacheSoftwareLicense20()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "android-gif-drawable",
+                    "https://github.com/koral--/android-gif-drawable",
+                    "present Karol Wrótniak, Droids on Roids LLC",
+                    MITLicense()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "commons-io",
+                    "https://github.com/apache/commons-io",
+                    "The Apache Software Foundation",
+                    ApacheSoftwareLicense20()
+                )
+            )
+            notices.addNotice(
+                Notice(
+                    "StickerBot", "https://github.com/Cryolitia/StickerBot", "Cryolitia & 神经元",
+                    MITLicense()
+                )
+            )
+
+            LicensesDialog.Builder(requireContext()).setNotices(notices).setIncludeOwnLicense(true)
+                .setThemeResourceId(com.google.android.material.R.style.Theme_Material3_DayNight_Dialog)
+                .build().show()
             true
         }
     }
